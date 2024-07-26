@@ -52,6 +52,24 @@
         .button:hover {
             background-color: #1ed760;
         }
+        .loading {
+            display: none;
+            text-align: center;
+            margin-top: 20px;
+        }
+        .loading::after {
+            content: '';
+            display: inline-block;
+            width: 30px;
+            height: 30px;
+            border: 3px solid #ffffff;
+            border-radius: 50%;
+            border-top-color: #1DB954;
+            animation: spin 1s ease-in-out infinite;
+        }
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
     </style>
 </head>
 <body>
@@ -63,11 +81,13 @@
         <a id="spotifyLink" href="#" class="button" target="_blank">Open in Spotify</a>
         <a id="rollAgain" class="button">Roll Again</a>
     </div>
+    <div id="loading" class="loading"></div>
 
     <script>
         const API_URL = 'https://script.google.com/macros/s/AKfycbxBlOPwjRcSQV6lgBHQNHVI_eUp4Je9qm0LbyQJ9Pa7MlDhqzhny9ki_5kD6teD_27t/exec?action=random&type=album';
 
         async function fetchRandomItem() {
+            document.getElementById('loading').style.display = 'block';
             try {
                 const response = await fetch(API_URL);
                 const data = await response.json();
@@ -80,6 +100,8 @@
             } catch (error) {
                 console.error('Error fetching data:', error);
                 alert('An error occurred while fetching data. Please try again.');
+            } finally {
+                document.getElementById('loading').style.display = 'none';
             }
         }
 
