@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Random Spotify Album/Playlist</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            margin: 0;
+            background-color: #121212;
+            color: #ffffff;
+        }
+        .container {
+            text-align: center;
+            background-color: #181818;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+        img {
+            max-width: 300px;
+            height: auto;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+        h1 {
+            margin: 10px 0;
+            font-size: 24px;
+        }
+        p {
+            margin: 5px 0;
+            font-size: 18px;
+        }
+        .button {
+            display: inline-block;
+            background-color: #1DB954;
+            color: white;
+            padding: 10px 20px;
+            text-decoration: none;
+            border-radius: 24px;
+            font-weight: bold;
+            margin: 10px 5px;
+            transition: background-color 0.3s;
+            cursor: pointer;
+        }
+        .button:hover {
+            background-color: #1ed760;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <img id="coverArt" src="" alt="Album Cover">
+        <h1 id="itemName"></h1>
+        <p id="artistName"></p>
+        <p id="genre"></p>
+        <a id="spotifyLink" href="#" class="button" target="_blank">Open in Spotify</a>
+        <a id="rollAgain" class="button">Roll Again</a>
+    </div>
+
+    <script>
+        const API_URL = 'https://script.google.com/macros/s/AKfycbxBlOPwjRcSQV6lgBHQNHVI_eUp4Je9qm0LbyQJ9Pa7MlDhqzhny9ki_5kD6teD_27t/exec?action=random&type=album';
+
+        async function fetchRandomItem() {
+            try {
+                const response = await fetch(API_URL);
+                const data = await response.json();
+                
+                document.getElementById('coverArt').src = data.coverUrl || '';
+                document.getElementById('itemName').textContent = data.name || 'Unknown Item';
+                document.getElementById('artistName').textContent = data.artist || 'Unknown Artist';
+                document.getElementById('genre').textContent = `Genre: ${data.genre || 'Unknown'}`;
+                document.getElementById('spotifyLink').href = data.spotifyUrl;
+            } catch (error) {
+                console.error('Error fetching data:', error);
+                alert('An error occurred while fetching data. Please try again.');
+            }
+        }
+
+        document.getElementById('rollAgain').addEventListener('click', fetchRandomItem);
+
+        // Initial fetch
+        fetchRandomItem();
+    </script>
+</body>
+</html>
