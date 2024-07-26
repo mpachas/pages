@@ -82,13 +82,21 @@
     <div class="mosaic" id="albumMosaic"></div>
 
     <script>
-        const API_URL = 'https://script.google.com/macros/s/AKfycbxBlOPwjRcSQV6lgBHQNHVI_eUp4Je9qm0LbyQJ9Pa7MlDhqzhny9ki_5kD6teD_27t/exec?action=all&type=album';
+        const API_URL = 'https://script.google.com/macros/s/AKfycbyPhoCTPnXmC3xJEM7i4vH2qPPSnc9y11CesA-1QAzKflgJv3q4gLHrG37jh1W4iA5-/exec?action=all&type=album';
+        const CACHE_KEY = 'spotifyAlbumMosaicData';
+        const CACHE_EXPIRY = 6 * 60 * 60 * 1000; // 6 hours in milliseconds
 
         async function fetchAlbums() {
             document.getElementById('loading').style.display = 'block';
             try {
+                const cachedData = getCachedData();
+                if (cachedData) {
+                    return cachedData;
+                }
+
                 const response = await fetch(API_URL);
                 const data = await response.json();
+                cacheData(data);
                 return data;
             } catch (error) {
                 console.error('Error fetching data:', error);
@@ -97,6 +105,25 @@
             } finally {
                 document.getElementById('loading').style.display = 'none';
             }
+        }
+
+        function getCachedData() {
+            const cachedItem = localStorage.getItem(CACHE_KEY);
+            if (cachedItem) {
+                const { data, timestamp } = JSON.parse(cachedItem);
+                if (Date.now() - timestamp < CACHE_EXPIRY) {
+                    return data;
+                }
+            }
+            return null;
+        }
+
+        function cacheData(data) {
+            const cacheItem = {
+                data: data,
+                timestamp: Date.now()
+            };
+            localStorage.setItem(CACHE_KEY, JSON.stringify(cacheItem));
         }
 
         function shuffleArray(array) {
@@ -111,7 +138,7 @@
             const albumEl = document.createElement('div');
             albumEl.className = 'album';
             albumEl.innerHTML = `
-                <img src="${album.coverUrl}" alt="${album.name}">
+                <img src="${album.coverUrl}" alt="${album.name}" loading="lazy">
                 <div class="album-info">
                     <div class="album-title">${album.name}</div>
                     <div class="album-artist">${album.artist}</div>
@@ -126,9 +153,11 @@
             const albums = await fetchAlbums();
             const shuffledAlbums = shuffleArray(albums);
             
+            const fragment = document.createDocumentFragment();
             shuffledAlbums.forEach(album => {
-                mosaic.appendChild(createAlbumElement(album));
+                fragment.appendChild(createAlbumElement(album));
             });
+            mosaic.appendChild(fragment);
         }
 
         initMosaic();
