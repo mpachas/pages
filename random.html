@@ -3,155 +3,105 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Random Spotify Album</title>
+    <title>Random Album Picker</title>
     <style>
-        body {
-            font-family: Arial, sans-serif;
-            background-color: #121212;
-            color: #ffffff;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            height: 100vh;
-            margin: 0;
-        }
-        .container {
-            text-align: center;
-            background-color: #181818;
-            padding: 20px;
-            border-radius: 8px;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-        }
-        #coverArt {
-            max-width: 300px;
-            border-radius: 8px;
-            margin-bottom: 20px;
-        }
-        #itemName {
-            font-size: 24px;
-            margin-bottom: 20px;
+        .loading {
+            display: none;
         }
         .button {
             display: inline-block;
+            padding: 10px 20px;
             background-color: #1DB954;
             color: white;
-            padding: 10px 20px;
             text-decoration: none;
             border-radius: 20px;
-            margin: 0 10px;
-            transition: background-color 0.3s;
-        }
-        .button:hover {
-            background-color: #1ed760;
-        }
-        .loading {
-            display: none;
-            position: fixed;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-        }
-        .loading::after {
-            content: '';
-            display: block;
-            width: 40px;
-            height: 40px;
-            border-radius: 50%;
-            border: 4px solid #ffffff;
-            border-color: #ffffff transparent #ffffff transparent;
-            animation: spin 1.2s linear infinite;
-        }
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
         }
     </style>
 </head>
 <body>
     <div class="container">
-        <img id="coverArt" alt="Album Cover">
         <h1 id="itemName"></h1>
+        <img id="coverImage" src="" alt="Album cover" style="max-width: 300px;">
+        <p id="artistName"></p>
         <a id="spotifyLink" class="button" target="_blank">Open in Spotify</a>
         <button id="rollAgain" class="button">Roll Again</button>
     </div>
 
-    <div id="loading" class="loading"></div>
+    <div id="loading" class="loading">Loading...</div>
 
     <script>
-        const API_URL = 'https://script.google.com/macros/s/AKfycbxecDj2UpBGdyMIn5QPBYtInysM69a0hKmcGXaXXpHBSHLxYltfyC-ob3zRgFAULit_/exec?action=random&type=album';
-        const CACHE_KEY = 'randomAlbumCache';
-        const CACHE_EXPIRY = 6 * 60 * 60 * 1000; // 6 hours in milliseconds
+        const CACHE_KEY = 'albumCache';
+        const VERSION_KEY = 'albumCacheVersion';
+        const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbz63RX2kvrxaeNYwi8LnW5NBqiRY3LRmff3E-cMeFFXiaNFY6W7tGOMfs4UKpwBCwCm/exec'; // Replace with your actual script URL
+        
+        let albumStack = [];
 
-        async function fetchRandomAlbum() {
-            document.getElementById('loading').style.display = 'block';
-            try {
-                const response = await fetch(API_URL);
-                const data = await response.json();
-                cacheAlbum(data);
-                return data;
-            } catch (error) {
-                console.error('Error fetching data:', error);
-                alert('An error occurred while fetching data. Please try again.');
-                return null;
-            } finally {
-                document.getElementById('loading').style.display = 'none';
+        async function getRandomAlbum() {
+            showLoading(true);
+            if (albumStack.length < 5) {
+                await refreshAlbumStack();
             }
-        }
-
-        function getCachedAlbums() {
-            const cachedItem = localStorage.getItem(CACHE_KEY);
-            if (cachedItem) {
-                const { data, timestamp } = JSON.parse(cachedItem);
-                if (Date.now() - timestamp < CACHE_EXPIRY) {
-                    return data;
-                }
-            }
-            return [];
-        }
-
-        function cacheAlbum(album) {
-            let cachedAlbums = getCachedAlbums();
-            cachedAlbums = cachedAlbums.filter(a => a.spotifyUrl !== album.spotifyUrl);
-            cachedAlbums.unshift(album);
-            if (cachedAlbums.length > 10) cachedAlbums.pop();
             
-            const cacheItem = {
-                data: cachedAlbums,
-                timestamp: Date.now()
-            };
-            localStorage.setItem(CACHE_KEY, JSON.stringify(cacheItem));
+            if (albumStack.length > 0) {
+                const album = albumStack.pop();
+                displayAlbum(album);
+                localStorage.setItem(CACHE_KEY, JSON.stringify(albumStack));
+            } else {
+                document.getElementById('itemName').textContent = 'No albums available';
+            }
+
+            showLoading(false);
+            // Check for updates in the background
+            checkForUpdates();
+        }
+
+        async function refreshAlbumStack() {
+            try {
+                const response = await fetch(`${SCRIPT_URL}?action=getAll&type=album`);
+                const data = await response.json();
+                albumStack = data.items;
+                localStorage.setItem(CACHE_KEY, JSON.stringify(albumStack));
+                localStorage.setItem(VERSION_KEY, data.version);
+            } catch (error) {
+                console.error('Error refreshing album stack:', error);
+            }
+        }
+
+        async function checkForUpdates() {
+            try {
+                const response = await fetch(`${SCRIPT_URL}?action=checkVersion`);
+                const data = await response.json();
+                const currentVersion = localStorage.getItem(VERSION_KEY);
+                if (data.version !== currentVersion) {
+                    await refreshAlbumStack();
+                }
+            } catch (error) {
+                console.error('Error checking for updates:', error);
+            }
         }
 
         function displayAlbum(album) {
-            document.getElementById('coverArt').src = album.coverUrl;
-            document.getElementById('itemName').textContent = `${album.name} by ${album.artist}`;
+            document.getElementById('itemName').textContent = album.name;
+            document.getElementById('artistName').textContent = `Artist: ${album.artist}`;
+            document.getElementById('coverImage').src = album.coverUrl;
+            document.getElementById('coverImage').alt = `${album.name} cover`;
             document.getElementById('spotifyLink').href = album.spotifyUrl;
         }
 
-        async function getRandomAlbum() {
-            let cachedAlbums = getCachedAlbums();
-            let album;
-
-            if (cachedAlbums.length > 0) {
-                album = cachedAlbums.shift();
-                const cacheItem = {
-                    data: cachedAlbums,
-                    timestamp: Date.now()
-                };
-                localStorage.setItem(CACHE_KEY, JSON.stringify(cacheItem));
-            } else {
-                album = await fetchRandomAlbum();
-            }
-
-            if (album) {
-                displayAlbum(album);
-            }
+        function showLoading(show) {
+            document.getElementById('loading').style.display = show ? 'block' : 'none';
         }
 
         document.getElementById('rollAgain').addEventListener('click', getRandomAlbum);
 
-        // Initial load
-        getRandomAlbum();
+        // Initialize
+        window.addEventListener('load', async () => {
+            const cachedAlbums = localStorage.getItem(CACHE_KEY);
+            if (cachedAlbums) {
+                albumStack = JSON.parse(cachedAlbums);
+            }
+            await getRandomAlbum();
+        });
     </script>
 </body>
 </html>
