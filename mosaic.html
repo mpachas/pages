@@ -82,19 +82,19 @@
     <div class="mosaic" id="albumMosaic"></div>
 
     <script>
-        const API_URL = 'https://script.google.com/macros/s/AKfycbz63RX2kvrxaeNYwi8LnW5NBqiRY3LRmff3E-cMeFFXiaNFY6W7tGOMfs4UKpwBCwCm/exec?action=getAll&type=album';
+        const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbz63RX2kvrxaeNYwi8LnW5NBqiRY3LRmff3E-cMeFFXiaNFY6W7tGOMfs4UKpwBCwCm/exec';
         const CACHE_KEY = 'spotifyAlbumMosaicData';
-        const CACHE_EXPIRY = 6 * 60 * 60 * 1000; // 6 hours in milliseconds
+        const VERSION_KEY = 'spotifyAlbumMosaicVersion';
 
         async function fetchAlbums() {
             document.getElementById('loading').style.display = 'block';
             try {
                 const cachedData = getCachedData();
                 if (cachedData) {
-                    return cachedData;
+                    return JSON.parse(cachedData);
                 }
 
-                const response = await fetch(API_URL);
+                const response = await fetch(`${SCRIPT_URL}?action=getAll&type=album`);
                 const data = await response.json();
                 cacheData(data);
                 return data;
@@ -110,19 +110,14 @@
         function getCachedData() {
             const cachedItem = localStorage.getItem(CACHE_KEY);
             if (cachedItem) {
-                const { data, timestamp } = JSON.parse(cachedItem);
-                if (Date.now() - timestamp < CACHE_EXPIRY) {
-                    return data;
-                }
+                return cachedItem;
             }
+            
             return null;
         }
 
         function cacheData(data) {
-            const cacheItem = {
-                data: data,
-                timestamp: Date.now()
-            };
+            const cacheItem = data;
             localStorage.setItem(CACHE_KEY, JSON.stringify(cacheItem));
         }
 
@@ -151,7 +146,7 @@
         async function initMosaic() {
             const mosaic = document.getElementById('albumMosaic');
             const albums = await fetchAlbums();
-            const shuffledAlbums = shuffleArray(albums);
+            const shuffledAlbums = shuffleArray(albums.items);
             
             const fragment = document.createDocumentFragment();
             shuffledAlbums.forEach(album => {
