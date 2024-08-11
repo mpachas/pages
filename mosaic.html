@@ -142,6 +142,7 @@
                 
                 if (data.version !== cachedVersion) {
                     console.log('New version detected. Updating mosaic...');
+                    showSpinner();
                     const newData = await fetchAlbums(true);
                     return newData.items;
                 }
@@ -176,13 +177,26 @@
 
         function updateMosaic(albums) {
             const mosaic = document.getElementById('albumMosaic');
-            mosaic.innerHTML = ''; // Clear existing albums
+            const loadingSpinner = document.getElementById('loading');
+
+            // Show the spinner
+            // loadingSpinner.style.display = 'flex';
+
+            // Clear existing albums
+            mosaic.innerHTML = '';
+
             const shuffledAlbums = shuffleArray(albums);
             const fragment = document.createDocumentFragment();
             shuffledAlbums.forEach(album => {
                 fragment.appendChild(createAlbumElement(album));
             });
+
+            // Append new albums
             mosaic.appendChild(fragment);
+
+            // Hide the spinner
+            // loadingSpinner.style.display = 'none';
+            hideSpinner();
         }
 
         async function initMosaic() {
