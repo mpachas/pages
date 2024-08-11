@@ -110,7 +110,6 @@
         const VERSION_KEY = 'spotifyAlbumMosaicVersion';
 
         async function fetchAlbums(forceUpdate = false) {
-            showSpinner();
             try {
                 const response = await fetch(`${SCRIPT_URL}?action=getAll&type=album`);
                 const data = await response.json();
@@ -119,8 +118,6 @@
             } catch (error) {
                 console.error('Error fetching data:', error);
                 return null;
-            } finally {
-                hideSpinner();
             }
         }
 
@@ -179,14 +176,13 @@
 
         function updateMosaic(albums) {
             const mosaic = document.getElementById('albumMosaic');
-            if (mosaic.children.length === 0) {
-                const shuffledAlbums = shuffleArray(albums);
-                const fragment = document.createDocumentFragment();
-                shuffledAlbums.forEach(album => {
-                    fragment.appendChild(createAlbumElement(album));
-                });
-                mosaic.appendChild(fragment);
-            }
+            mosaic.innerHTML = ''; // Clear existing albums
+            const shuffledAlbums = shuffleArray(albums);
+            const fragment = document.createDocumentFragment();
+            shuffledAlbums.forEach(album => {
+                fragment.appendChild(createAlbumElement(album));
+            });
+            mosaic.appendChild(fragment);
         }
 
         async function initMosaic() {
@@ -195,10 +191,12 @@
                 updateMosaic(cachedData.items);
                 checkForUpdatesInBackground();
             } else {
+                showSpinner();
                 const data = await fetchAlbums();
                 if (data && data.items) {
                     updateMosaic(data.items);
                 }
+                hideSpinner();
             }
         }
 
