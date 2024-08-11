@@ -68,21 +68,10 @@
                 --base-font-size: 14px;
             }
             .mosaic {
-                grid-template-columns: repeat(auto-fill, minmax(25%, 1fr));
-            }
-            .album-info {
-                padding: 0.5rem;
-            }
-        }
-        @media (max-width: 480px) {
-            :root {
-                --base-font-size: 12px;
-            }
-            .mosaic {
                 grid-template-columns: repeat(auto-fill, minmax(33.333%, 1fr));
             }
             .album-info {
-                padding: 0.375rem;
+                padding: 0.5rem;
             }
         }
         .loading {
@@ -95,6 +84,7 @@
             display: flex;
             justify-content: center;
             align-items: center;
+            z-index: 1000;
         }
         .loading::after {
             content: '';
@@ -113,6 +103,7 @@
 <body>
     <div id="loading" class="loading" style="display: none;"></div>
     <div class="mosaic" id="albumMosaic"></div>
+
     <script>
         const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbz63RX2kvrxaeNYwi8LnW5NBqiRY3LRmff3E-cMeFFXiaNFY6W7tGOMfs4UKpwBCwCm/exec';
         const CACHE_KEY = 'spotifyAlbumMosaicData';
@@ -225,6 +216,9 @@
         function hideSpinner() {
             document.getElementById('loading').style.display = 'none';
         }
+
+        // Hide spinner initially
+        hideSpinner();
 
         initMosaic();
     </script>
