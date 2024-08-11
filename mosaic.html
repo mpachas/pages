@@ -5,23 +5,27 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Spotify Album Mosaic</title>
     <style>
+        :root {
+            --base-font-size: 16px;
+        }
         body {
             font-family: Arial, sans-serif;
             margin: 0;
-            padding: 20px;
+            padding: 1.25rem;
             background-color: #121212;
             color: #ffffff;
+            font-size: var(--base-font-size);
         }
         .mosaic {
             display: grid;
-            grid-template-columns: repeat(8, 1fr);
-            gap: 10px;
+            grid-template-columns: repeat(auto-fill, minmax(12.5%, 1fr));
+            gap: 0.625rem;
         }
         .album {
             position: relative;
             aspect-ratio: 1 / 1;
             overflow: hidden;
-            border-radius: 8px;
+            border-radius: 0.5rem;
             cursor: pointer;
         }
         .album img {
@@ -39,7 +43,7 @@
             left: 0;
             right: 0;
             background: rgba(0, 0, 0, 0.7);
-            padding: 10px;
+            padding: 0.625rem;
             transform: translateY(100%);
             transition: transform 0.3s ease;
         }
@@ -48,19 +52,37 @@
         }
         .album-title {
             font-weight: bold;
-            margin-bottom: 5px;
+            margin-bottom: 0.3125rem;
+            font-size: 0.9em;
+        }
+        .album-artist {
+            font-size: 0.8em;
+        }
+        @media (max-width: 1024px) {
+            .mosaic {
+                grid-template-columns: repeat(auto-fill, minmax(20%, 1fr));
+            }
         }
         @media (max-width: 768px) {
+            :root {
+                --base-font-size: 14px;
+            }
             .mosaic {
-                grid-template-columns: repeat(4, 1fr);
+                grid-template-columns: repeat(auto-fill, minmax(25%, 1fr));
             }
             .album-info {
-                font-size: 12px;
-                padding: 5px;
+                padding: 0.5rem;
             }
-            .album-title {
-                font-size: 14px;
-                margin-bottom: 2px;
+        }
+        @media (max-width: 480px) {
+            :root {
+                --base-font-size: 12px;
+            }
+            .mosaic {
+                grid-template-columns: repeat(auto-fill, minmax(33.333%, 1fr));
+            }
+            .album-info {
+                padding: 0.375rem;
             }
         }
         .loading {
@@ -76,9 +98,9 @@
         }
         .loading::after {
             content: '';
-            width: 40px;
-            height: 40px;
-            border: 4px solid #ffffff;
+            width: 2.5rem;
+            height: 2.5rem;
+            border: 0.25rem solid #ffffff;
             border-radius: 50%;
             border-top-color: #1DB954;
             animation: spin 1s linear infinite;
@@ -91,7 +113,6 @@
 <body>
     <div id="loading" class="loading" style="display: none;"></div>
     <div class="mosaic" id="albumMosaic"></div>
-
     <script>
         const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbz63RX2kvrxaeNYwi8LnW5NBqiRY3LRmff3E-cMeFFXiaNFY6W7tGOMfs4UKpwBCwCm/exec';
         const CACHE_KEY = 'spotifyAlbumMosaicData';
