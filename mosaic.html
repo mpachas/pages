@@ -90,7 +90,7 @@
         const VERSION_KEY = 'spotifyAlbumMosaicVersion';
 
         async function fetchAlbums(forceUpdate = false) {
-            document.getElementById('loading').style.display = 'flex';
+            showSpinner();
             try {
                 const response = await fetch(`${SCRIPT_URL}?action=getAll&type=album`);
                 const data = await response.json();
@@ -100,7 +100,7 @@
                 console.error('Error fetching data:', error);
                 return null;
             } finally {
-                document.getElementById('loading').style.display = 'none';
+                hideSpinner();
             }
         }
 
@@ -159,14 +159,14 @@
 
         function updateMosaic(albums) {
             const mosaic = document.getElementById('albumMosaic');
-            const shuffledAlbums = shuffleArray(albums);
-            
-            mosaic.innerHTML = '';
-            const fragment = document.createDocumentFragment();
-            shuffledAlbums.forEach(album => {
-                fragment.appendChild(createAlbumElement(album));
-            });
-            mosaic.appendChild(fragment);
+            if (mosaic.children.length === 0) {
+                const shuffledAlbums = shuffleArray(albums);
+                const fragment = document.createDocumentFragment();
+                shuffledAlbums.forEach(album => {
+                    fragment.appendChild(createAlbumElement(album));
+                });
+                mosaic.appendChild(fragment);
+            }
         }
 
         async function initMosaic() {
@@ -187,6 +187,14 @@
             if (updatedAlbums) {
                 updateMosaic(updatedAlbums);
             }
+        }
+
+        function showSpinner() {
+            document.getElementById('loading').style.display = 'flex';
+        }
+
+        function hideSpinner() {
+            document.getElementById('loading').style.display = 'none';
         }
 
         initMosaic();
