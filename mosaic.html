@@ -18,7 +18,7 @@
         }
         .mosaic {
             display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(12.5%, 1fr));
+            grid-template-columns: repeat(auto-fill, minmax(14.5%, 1fr));
             gap: 0.625rem;
         }
         .album {
@@ -68,7 +68,7 @@
                 --base-font-size: 14px;
             }
             .mosaic {
-                grid-template-columns: repeat(auto-fill, minmax(33.333%, 1fr));
+                grid-template-columns: repeat(auto-fill, minmax(25.333%, 1fr));
             }
             .album-info {
                 padding: 0.5rem;
@@ -141,7 +141,7 @@
             try {
                 const response = await fetch(`${SCRIPT_URL}?action=checkVersion`);
                 const data = await response.json();
-                const cachedVersion = localStorage.getItem(VERSION_KEY);
+                const cachedVersion = Number(localStorage.getItem(VERSION_KEY));
                 
                 if (data.version !== cachedVersion) {
                     console.log('New version detected. Updating mosaic...');
