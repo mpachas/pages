@@ -136,11 +136,17 @@
             }
         }
 
+        function decodeHtmlEntities(text) {
+            const textarea = document.createElement('textarea');
+            textarea.innerHTML = text;
+            return textarea.value;
+        }
+
         function displayAlbum(album) {
-            document.getElementById('itemName').textContent = album.name;
-            document.getElementById('artistName').textContent = album.artist;
+            document.getElementById('itemName').textContent = decodeHtmlEntities(album.name);
+            document.getElementById('artistName').textContent = decodeHtmlEntities(album.artist);
             document.getElementById('coverImage').src = album.coverUrl;
-            document.getElementById('coverImage').alt = `${album.name} cover`;
+            document.getElementById('coverImage').alt = `${decodeHtmlEntities(album.name)} cover`;
             document.getElementById('spotifyLink').href = album.spotifyUrl;
         }
 
