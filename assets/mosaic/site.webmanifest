@@ -2,7 +2,7 @@
     "id": "mosaic-app-id",
     "name": "Mosaic App",
     "short_name": "Mosaic",
-    "start_url": "mosaic.html",
+    "start_url": "/mosaic.html",
     "scope": "/",
     "icons": [
       {
