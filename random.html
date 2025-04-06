@@ -95,10 +95,7 @@
         async function getRandomAlbum() {
             showLoading(true);
 
-            if (albumStack.length < 5) {
-                await refreshAlbumStack(false); // Fetch more albums if stack is low
-            }
-
+            // Step 1: Pop an album from AlbumStack to show
             if (albumStack.length > 0) {
                 const album = albumStack.pop();
                 displayAlbum(album);
@@ -109,7 +106,7 @@
 
             showLoading(false);
 
-            // Always check for updates after rolling
+            // Step 2: Check AlbumCache version
             await checkForUpdates();
         }
 
@@ -120,12 +117,15 @@
                 const newAlbums = data.items;
 
                 if (replaceStack) {
-                    // Replace the entire stack
+                    // Replace the entire stack with new albums
                     albumStack = newAlbums;
                 } else {
-                    // Merge new albums, keeping the current 20 items in place
+                    // Keep the existing items (20 or fewer) in place
+                    // and add unique new albums that aren't already in the stack
                     const existingIds = new Set(albumStack.map(album => album.id));
                     const uniqueNewAlbums = newAlbums.filter(album => !existingIds.has(album.id));
+                    
+                    // Keep existing items in their place and append unique new albums
                     albumStack = [...albumStack, ...uniqueNewAlbums];
                 }
 
@@ -145,11 +145,12 @@
 
                 if (data.version !== currentVersion) {
                     // Version is greater: Replace the full stack
-                    await refreshAlbumStack(true); // Pass true to indicate full replacement
+                    await refreshAlbumStack(true);
                 } else if (albumStack.length <= 20) {
                     // Version is equal and stack count is <= 20: Pull and merge
-                    await refreshAlbumStack(false); // Pass false to indicate merging
+                    await refreshAlbumStack(false);
                 }
+                // If remaining items > 20, do nothing
             } catch (error) {
                 console.error('Error checking for updates:', error);
             }
