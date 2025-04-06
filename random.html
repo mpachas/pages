@@ -94,10 +94,11 @@
 
         async function getRandomAlbum() {
             showLoading(true);
+
             if (albumStack.length < 5) {
-                await refreshAlbumStack();
+                await refreshAlbumStack(false); // Fetch more albums if stack is low
             }
-            
+
             if (albumStack.length > 0) {
                 const album = albumStack.pop();
                 displayAlbum(album);
@@ -107,15 +108,28 @@
             }
 
             showLoading(false);
-            // Check for updates in the background
-            checkForUpdates();
+
+            // Always check for updates after rolling
+            await checkForUpdates();
         }
 
-        async function refreshAlbumStack() {
+        async function refreshAlbumStack(replaceStack) {
             try {
                 const response = await fetch(`${SCRIPT_URL}?action=getAll&type=album`);
                 const data = await response.json();
-                albumStack = data.items;
+                const newAlbums = data.items;
+
+                if (replaceStack) {
+                    // Replace the entire stack
+                    albumStack = newAlbums;
+                } else {
+                    // Merge new albums, keeping the current 20 items in place
+                    const existingIds = new Set(albumStack.map(album => album.id));
+                    const uniqueNewAlbums = newAlbums.filter(album => !existingIds.has(album.id));
+                    albumStack = [...albumStack, ...uniqueNewAlbums];
+                }
+
+                // Save updated stack and version to localStorage
                 localStorage.setItem(CACHE_KEY, JSON.stringify(albumStack));
                 localStorage.setItem(VERSION_KEY, data.version);
             } catch (error) {
@@ -128,8 +142,13 @@
                 const response = await fetch(`${SCRIPT_URL}?action=checkVersion`);
                 const data = await response.json();
                 const currentVersion = localStorage.getItem(VERSION_KEY);
+
                 if (data.version !== currentVersion) {
-                    await refreshAlbumStack();
+                    // Version is greater: Replace the full stack
+                    await refreshAlbumStack(true); // Pass true to indicate full replacement
+                } else if (albumStack.length <= 20) {
+                    // Version is equal and stack count is <= 20: Pull and merge
+                    await refreshAlbumStack(false); // Pass false to indicate merging
                 }
             } catch (error) {
                 console.error('Error checking for updates:', error);
