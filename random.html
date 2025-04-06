@@ -120,18 +120,26 @@
                     // Replace the entire stack with new albums
                     albumStack = newAlbums;
                 } else {
-                    // Keep the existing items (20 or fewer) in place
+                    // Keep the existing items in place
                     // and add unique new albums that aren't already in the stack
-                    const existingIds = new Set(albumStack.map(album => album.id));
-                    const uniqueNewAlbums = newAlbums.filter(album => !existingIds.has(album.id));
+                    const existingUrls = new Set(albumStack.map(album => album.spotifyUrl));
+                    
+                    const uniqueNewAlbums = newAlbums.filter(album => !existingUrls.has(album.spotifyUrl));
                     
                     // Keep existing items in their place and append unique new albums
                     albumStack = [...albumStack, ...uniqueNewAlbums];
+                    
+                    // If we still have a small stack, add some random albums
+                    if (albumStack.length < 20 && uniqueNewAlbums.length === 0) {
+                        const shuffled = [...newAlbums].sort(() => 0.5 - Math.random());
+                        const randomSelection = shuffled.slice(0, 20 - albumStack.length);
+                        albumStack = [...albumStack, ...randomSelection];
+                    }
                 }
 
                 // Save updated stack and version to localStorage
                 localStorage.setItem(CACHE_KEY, JSON.stringify(albumStack));
-                localStorage.setItem(VERSION_KEY, data.version);
+                localStorage.setItem(VERSION_KEY, data.version.toString());
             } catch (error) {
                 console.error('Error refreshing album stack:', error);
             }
@@ -143,14 +151,17 @@
                 const data = await response.json();
                 const currentVersion = localStorage.getItem(VERSION_KEY);
 
-                if (data.version !== currentVersion) {
-                    // Version is greater: Replace the full stack
+                // Convert versions to same type for comparison
+                const serverVersion = String(data.version);
+                const localVersion = String(currentVersion);
+
+                if (serverVersion !== localVersion) {
+                    // Version is different: Replace the full stack
                     await refreshAlbumStack(true);
                 } else if (albumStack.length <= 20) {
                     // Version is equal and stack count is <= 20: Pull and merge
                     await refreshAlbumStack(false);
                 }
-                // If remaining items > 20, do nothing
             } catch (error) {
                 console.error('Error checking for updates:', error);
             }
@@ -175,7 +186,7 @@
         }
 
         document.getElementById('rollAgain').addEventListener('click', getRandomAlbum);
-
+        
         // Initialize
         window.addEventListener('load', async () => {
             const cachedAlbums = localStorage.getItem(CACHE_KEY);
